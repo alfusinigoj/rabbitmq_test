@@ -49,7 +49,7 @@ public class MessageProcessor : IHostedService
         catch (Exception exception)
         {
             queue1Consumer.Reject(message);
-            logger.LogError(exception, $"Failed processing message from Queue1, so rejecting", message);
+            logger.LogError(exception, "Failed processing message from Queue1, so rejecting {0}", message);
         }
     }
 
@@ -65,7 +65,7 @@ public class MessageProcessor : IHostedService
         catch (Exception exception)
         {
             queue2Consumer.Reject(message);
-            logger.LogError(exception, $"Failed processing message from Queue2, so rejecting", message);
+            logger.LogError(exception, "Failed processing message from Queue2, so rejecting {0}", message);
         }
     }
 }
