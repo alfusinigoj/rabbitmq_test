@@ -47,5 +47,10 @@ public static class Program
 
         host.Start();
         host.WaitForShutdown();
+
+        foreach (var messageProcessed in Global.MessageProcessed)
+        {
+            Console.WriteLine($"MessageProcessed: {messageProcessed.Key.Name} - {messageProcessed.Value}");
+        }
     }
 }

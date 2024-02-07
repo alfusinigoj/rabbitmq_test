@@ -10,6 +10,8 @@ public class MessageProcessor : IHostedService
     private readonly IConsumer<Queue1Message> queue1Consumer;
     private readonly IConsumer<Queue2Message> queue2Consumer;
 
+    Dictionary<string,int> nackCount = new Dictionary<string, int>();
+
     public MessageProcessor(IHostApplicationLifetime applicationLifetime,
                             ILogger<MessageProcessor> logger,
                             IConsumer<Queue1Message> queue1Consumer,
@@ -23,6 +25,8 @@ public class MessageProcessor : IHostedService
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
+        Global.MessageProcessed[typeof(IConsumer<Queue1Message>)] = 0;
+        Global.MessageProcessed[typeof(IConsumer<Queue2Message>)] = 0;
         queue1Consumer.MessageReceived += OnReceived_Queue1;
         queue2Consumer.MessageReceived += OnReceived_Queue2;
         applicationLifetime.ApplicationStarted.Register(() =>
@@ -45,6 +49,7 @@ public class MessageProcessor : IHostedService
         {
                 logger.LogInformation($"Received from Queue1 {JsonConvert.SerializeObject(message.Content)}");
                 queue1Consumer.Acknowledge(message);
+                Global.MessageProcessed[typeof(IConsumer<Queue1Message>)]++;
         }
         catch (Exception exception)
         {
@@ -59,7 +64,20 @@ public class MessageProcessor : IHostedService
         {
             {
                 logger.LogInformation($"Received from Queue2 {JsonConvert.SerializeObject(message.Content)}");
+
+                if(!nackCount.ContainsKey(message.CorrelationId))
+                    nackCount[message.CorrelationId] = 0;
+
+                if(nackCount[message.CorrelationId] < 50)
+                {
+                    queue2Consumer.Nack(message);
+                    logger.LogInformation($"Nack from Queue2 {JsonConvert.SerializeObject(message.Content)}");
+                    nackCount[message.CorrelationId]++;
+                    return;
+                }
                 queue2Consumer.Acknowledge(message);
+
+                Global.MessageProcessed[typeof(IConsumer<Queue2Message>)]++;
             }
         }
         catch (Exception exception)

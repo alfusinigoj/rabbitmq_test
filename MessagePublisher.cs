@@ -31,7 +31,7 @@ public class MessagePublisher : IHostedService
             var myMessage = new Message { SomeText = $"{text} - {index}" };
             producer.Send(new OutboundMessage<Message>(myMessage, routeKeys));
             index++;
-            //Thread.Sleep(1000);
+            Thread.Sleep(10);
         }
 
         return Task.CompletedTask;
